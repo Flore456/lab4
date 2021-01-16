@@ -1,0 +1,214 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Persons</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+</head>
+<body>
+<div class="header">
+    <div class="header-link">
+        <a href="/xml/banks">XML</a>
+    </div>
+    <div class="header-link">
+        <a href="banks.html" >Banks</a>
+    </div>
+    <div class="header-link current-link">
+        <a href="persons.html">Persons</a>
+    </div>
+    <div class="header-link">
+        <a href="cars.html">Cars</a>
+    </div>
+</div>
+<div id="content">
+    <div class="table-wrapper">
+        <table>
+            <thead>
+            <tr>
+                <td class="id-column">Id</td>
+                <td>Name</td>
+                <td>First_name</td>
+                <td>City</td>
+                <td>Birthday</td>
+                <td>Car</td>
+                <td>Bank</td>
+                <td class="delete-button">Delete</td>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="person in personList">
+                <td>{{person.id}}</td>
+                <td>{{person.name}}</td>
+                <td>{{person.first_name}}</td>
+                <td>{{person.city}}</td>
+                <td>{{person.birthday}}</td>
+                <td>{{person.car.brand + " " + person.car.color}}</td>
+                <td>{{person.bank.account_year + " " + person.bank.number_card + " " + person.bank.manager_name}}</td>
+                <td class="delete-button">
+                    <img class="del-img" src="/static/delete.png" width="16px" height="16px" @click="deletePerson(person)">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="creation">
+        <div class="creation-form">
+            <div class="input-form">
+                <label for="name">Name</label>
+                <input id="name" type="text" v-model="name">
+            </div>
+            <div class="input-form">
+                <label for="first_name">First_name</label>
+                <input id="first_name" type="text" v-model="first_name">
+            </div>
+            <div class="input-form">
+                <label for="city">City</label>
+                <input id="city" type="text" v-model="city">
+            </div>
+            <div class="input-form">
+                <label for="birthday">Birthday</label>
+                <input id="birthday" type="text" v-model="birthday">
+            </div>
+            <div class="input-form">
+                <label for="car">Cars</label>
+                <select id="car" v-model="selectedCar">
+                    <option v-for="car in cars" v-bind:value="car.car_id">{{car.brand + " " + car.color}}</option>
+                </select>
+            </div>
+            <div class="input-form">
+                <label for="bank">Banks</label>
+                <select id="bank" v-model="selectedBank">
+                    <option v-for="bank in banks" v-bind:value="bank.account_num">{{bank.account_year + " " + bank.number_card + " " + bank.manager_name}}</option>
+                </select>
+            </div>
+            <div class="input-form">
+                <button style="margin: auto" @click="addPerson">Add Person</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var SERVER_ERROR_MESSAGE = "Server error";
+    var vue = new Vue({
+        el: "#content",
+        data:{
+            addApi: Vue.resource('../add/person'),
+            deleteApi: Vue.resource('../delete/person'),
+            personListApi: Vue.resource('../persons'),
+            carListApi: Vue.resource('../cars'),
+            bankListApi: Vue.resource('../banks'),
+            selectedCar: "",
+            selectedBank: "",
+            personList: [],
+            name: "",
+            first_name: "",
+            city: "",
+            birthday: "",
+            cars: [],
+            banks: []
+        },
+        methods:{
+            addPerson: function () {
+                if (this.name === "" || this.first_name === "" || this.city === "" || this.birthday === "" || this.selectedCar === "" || this.selectedBank === "" ){
+                    alert("Fill name, first_name, city, birthday, selectedCar, selectedBank");
+                    return;
+                }
+                this.addApi
+                    .get({name: this.name, first_name: this.first_name, city: this.city, birthday: this.birthday, carId: this.selectedCar, bankId: this.selectedBank})
+                    .then(
+                        response => {
+                            if (response.status !== 200) {
+                                alert(SERVER_ERROR_MESSAGE);
+                                return;
+                            }
+                            let serverResponse = response.body;
+                            if (serverResponse.success === true) {
+                                let person = serverResponse.message;
+                                this.personList.push(person);
+                            }else{
+                                alert(serverResponse.message)
+                            }
+                        },
+                        errorResponse => {
+                            alert(SERVER_ERROR_MESSAGE);
+                        },
+                    );
+            },
+            deletePerson: function (person) {
+                this.deleteApi
+                    .get({id: person.id})
+                    .then(
+                        response => {
+                            if (response.status !== 200) {
+                                alert(SERVER_ERROR_MESSAGE);
+                                return;
+                            }
+                            let serverResponse = response.body;
+                            if (serverResponse.success === false) {
+                                alert(serverResponse.message)
+                            }else {
+                                let index = this.personList.indexOf(person);
+                                this.personList.splice(index, 1);
+                            }
+                        },
+                        errorResponse => {
+                            alert(SERVER_ERROR_MESSAGE);
+                        },
+                    );
+            }
+
+        },
+        beforeMount: function () {
+            this.personListApi
+                .get()
+                .then(
+                    response => {
+                        console.log(response);
+                        if (response.status !== 200) {
+                            alert(SERVER_ERROR_MESSAGE);
+                            return;
+                        }
+                        this.personList = response.body;
+                    },
+                    errorResponse => {
+                        alert(SERVER_ERROR_MESSAGE);
+                    },
+                );
+            this.carListApi
+                .get()
+                .then(
+                    response => {
+                        console.log(response);
+                        if (response.status !== 200) {
+                            alert(SERVER_ERROR_MESSAGE);
+                            return;
+                        }
+                        this.cars = response.body;
+                    },
+                    errorResponse => {
+                        alert(SERVER_ERROR_MESSAGE);
+                    },
+                );
+            this.bankListApi
+                .get()
+                .then(
+                    response => {
+                        console.log(response);
+                        if (response.status !== 200) {
+                            alert(SERVER_ERROR_MESSAGE);
+                            return;
+                        }
+                        this.banks = response.body;
+                    },
+                    errorResponse => {
+                        alert(SERVER_ERROR_MESSAGE);
+                    },
+                );
+        }
+    });
+
+</script>
+</body>
+</html>
