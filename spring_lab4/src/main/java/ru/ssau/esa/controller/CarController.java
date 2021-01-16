@@ -11,7 +11,6 @@ import ru.ssau.esa.repository.CarRepository;
 import ru.ssau.esa.response.BadResponse;
 import ru.ssau.esa.response.GoodResponse;
 import ru.ssau.esa.response.ServerResponse;
-
 import java.util.UUID;
 
 @RestController

@@ -4,10 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.ssau.esa.entity.Car;
-import ru.ssau.esa.entity.Bank;
-import ru.ssau.esa.entity.EventType;
-import ru.ssau.esa.entity.Person;
+import ru.ssau.esa.entity.*;
 import ru.ssau.esa.notifications.EmailSenderService;
 import ru.ssau.esa.notifications.JmsSenderService;
 import ru.ssau.esa.repository.PersonRepository;
@@ -31,8 +28,8 @@ public class PersonController {
     @Autowired
     public PersonController(PersonRepository repository, CarRepository carRepository, BankRepository bankRepository, JmsSenderService jmsSenderService) {
         this.repository=repository;
-        this.bankRepository=bankRepository;
         this.carRepository=carRepository;
+        this.bankRepository=bankRepository;
         this.jmsSenderService = jmsSenderService;
 
     }
@@ -64,7 +61,7 @@ public class PersonController {
 
         person.setCar(c);
         Person newPerson = repository.save(person);
-        jmsSenderService.sendAnimalUpdate(newPerson, EventType.CREATE);
+        jmsSenderService.sendPersonUpdate(newPerson, EventType.CREATE);
         jmsSenderService.sendEvent(Person.class, newPerson, EventType.CREATE);
         return new GoodResponse(newPerson);
 
@@ -78,7 +75,7 @@ public class PersonController {
             return new BadResponse("No Person!");
         }
         repository.delete(person);
-        jmsSenderService.sendAnimalUpdate(person, EventType.DELETE);
+        jmsSenderService.sendPersonUpdate(person, EventType.DELETE);
         jmsSenderService.sendEvent(Person.class, person, EventType.DELETE);
         return new GoodResponse();
     }
